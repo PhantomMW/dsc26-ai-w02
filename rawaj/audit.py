@@ -10,6 +10,7 @@ from sklearn.metrics import roc_auc_score
 
 def audit(df: pd.DataFrame, *, target: str, id_col: str, time_col: str) -> dict:
     """Audit a transfer extract before anyone trains a model on it."""
+
     # Required columns must exist.
     for column in (target, id_col, time_col):
         if column not in df.columns:
@@ -43,7 +44,7 @@ def audit(df: pd.DataFrame, *, target: str, id_col: str, time_col: str) -> dict:
     ]
     duplicate_ids = sorted(repeated_ids.drop_duplicates().tolist())
 
-    # Normalize all recognized missing values before counting exact duplicate rows.
+    # Normalize recognized missing values before counting duplicate rows.
     normalized = df.copy()
 
     for column, mask in missing_masks.items():
@@ -53,7 +54,7 @@ def audit(df: pd.DataFrame, *, target: str, id_col: str, time_col: str) -> dict:
 
     duplicate_rows = int(normalized.duplicated(keep="first").sum())
 
-    # Constant columns ignore missing values; target is always excluded.
+    # Constant columns ignore missing values; exclude the target.
     constant_columns = []
 
     for column in df.columns:
@@ -80,7 +81,7 @@ def audit(df: pd.DataFrame, *, target: str, id_col: str, time_col: str) -> dict:
         else 0.0
     )
 
-    # Parse non-missing timestamps and report invalid values.
+    # Parse non-missing timestamps and count invalid values.
     time_missing = missing_masks[time_col]
 
     parsed_times = pd.to_datetime(
@@ -114,13 +115,14 @@ def audit(df: pd.DataFrame, *, target: str, id_col: str, time_col: str) -> dict:
                 ~target_missing
             ].to_numpy()
 
-            # Skip columns with only one distinct value across the full dataset.
+            # Skip columns with one distinct value across the full dataset.
+            # Recognized missing values have already been normalized.
             if normalized[column].nunique(dropna=False) <= 1:
-             continue
+                continue
 
             suspect = False
 
-            # Check whether the missingness indicator predicts the label.
+            # Check whether missingness predicts the label.
             if len(set(column_missing.tolist())) > 1:
                 auc_missing = roc_auc_score(
                     y,
@@ -130,8 +132,7 @@ def audit(df: pd.DataFrame, *, target: str, id_col: str, time_col: str) -> dict:
                 if auc_missing >= 0.98 or auc_missing <= 0.02:
                     suspect = True
 
-            # Numeric/boolean value check: at least 20 usable rows and both
-            # classes must be present among those rows.
+            # Check numeric/boolean values using labelled, non-missing rows.
             if (
                 not suspect
                 and (
@@ -146,7 +147,11 @@ def audit(df: pd.DataFrame, *, target: str, id_col: str, time_col: str) -> dict:
 
                     if len(set(y_usable.tolist())) == 2:
                         values = series.loc[usable].to_numpy()
-                        auc_value = roc_auc_score(y_usable, values)
+
+                        auc_value = roc_auc_score(
+                            y_usable,
+                            values,
+                        )
 
                         if auc_value >= 0.98 or auc_value <= 0.02:
                             suspect = True
