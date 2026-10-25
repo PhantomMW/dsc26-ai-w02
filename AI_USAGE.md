@@ -1,16 +1,13 @@
 # AI usage
 
-<!-- Replace every comment below with your own words. Short is fine. The grader checks only
-     that this file exists and has been changed from this template; your Track Mentor reads it. -->
-
 ## Tools I used, and for which functions
 
-<!-- e.g. "Claude for a first draft of audit(); Copilot autocomplete in metrics.py" -->
+I used ChatGPT to help implement `audit()` in `rawaj/audit.py` and the six decision-metric functions in `rawaj/metrics.py`. I also used it to understand the requirements, review edge cases, and interpret test results. I used VS Code to edit the files and pytest to run the public tests.
 
 ## One place where the AI was wrong, incomplete, or not what the spec said
 
-<!-- What did it produce, and how did you notice: a test, the docs, or your own reasoning? -->
+The initial code paste included Markdown code-fence markers, which caused a Python `SyntaxError`. I noticed the problem from the pytest error message, removed the extra markers, and reran the test successfully. This showed me that code must be copied without its surrounding Markdown formatting.
 
 ## The function I wrote without AI, and why
 
-<!-- Which one, and what you learned by writing it yourself. -->
+I reviewed the public test results and compared the implementation against the task requirements myself. This helped me understand how the expected behavior is checked and why edge cases matter. I used AI assistance for the implementation, so I cannot claim that I wrote a complete function entirely without AI.
