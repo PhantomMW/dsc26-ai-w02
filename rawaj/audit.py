@@ -114,9 +114,9 @@ def audit(df: pd.DataFrame, *, target: str, id_col: str, time_col: str) -> dict:
                 ~target_missing
             ].to_numpy()
 
-            # Missingness counts as a value for the leakage constant check.
-            if series.nunique(dropna=False) <= 1:
-                continue
+            # Skip columns with only one distinct value across the full dataset.
+            if normalized[column].nunique(dropna=False) <= 1:
+             continue
 
             suspect = False
 
